@@ -40,7 +40,7 @@ public class Client {
 
             socket = start("pc3-053-l.cs.st-andrews.ac.uk", "24103");
 
-            while (true) {
+            while (true) { //The program keeps running until the user uses control C
 
                 int b = 0;
 

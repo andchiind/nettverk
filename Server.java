@@ -71,13 +71,18 @@ public class Server {
                     message = new String(messageBytes);
                     Date date = new Date();
                     String dateFormat = "yyyy-MM-dd_HH:mm:ss.SSS";
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat);
+                    String dateFormatDay = "yyyy-MM-dd";
+                    SimpleDateFormat formatSeconds = new SimpleDateFormat(dateFormat);
 
-                    String time = simpleDateFormat.format(date);
+                    String time = formatSeconds.format(date);
 
                     System.out.println("Received message from " + client.getInetAddress().getHostName() + " at " + time);
 
-                    /*directory = new File("name");
+                    SimpleDateFormat formatDays = new SimpleDateFormat(dateFormatDay);
+
+                    String todayDate = formatDays.format(date);
+
+                    directory = new File("/cs/home/aci2/nginx_default/cs2003/W04-Practical" + File.separator + todayDate);
 
                     if (directory.exists()) {
                         System.out.println("Directory already exists: " + directory.getName());
@@ -91,9 +96,10 @@ public class Server {
                             System.out.println("Failed to create directory: " + directory.getName());
                             System.exit(0);
                         }
-                    }*/
+                    }
 
-                    file = new File(System.getProperty("user.dir") + File.separator + time + ".txt");
+                    //file = new File(System.getProperty("user.dir") + File.separator + time + ".txt");
+                    file = new File(directory.getPath() + File.separator + time + ".txt");
 
                     if (file.exists()) {
 
@@ -116,7 +122,7 @@ public class Server {
                 }
 
             } catch (SocketTimeoutException e) {
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
