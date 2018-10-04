@@ -34,14 +34,14 @@ public class Server {
 
         start();
 
+        InputStream input;
+        File file = null;
+        File directory = null;
+
+        Socket client = null;
+        String message = null;
+
         while (true) {
-
-            InputStream input;
-            File file = null;
-            File directory = null;
-
-            Socket client = null;
-            String message = null;
 
             try {
 
@@ -65,8 +65,6 @@ public class Server {
 
                 if (b > 0) {
 
-                    System.out.println("Received message from " + client.getInetAddress().toString());
-
                     byte[] messageBytes = new byte[b];
                     System.arraycopy(buffer, 0, messageBytes, 0, b);
 
@@ -75,7 +73,11 @@ public class Server {
                     String dateFormat = "yyyy-MM-dd_HH:mm:ss.SSS";
                     SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat);
 
-                    directory = new File("name");
+                    String time = simpleDateFormat.format(date);
+
+                    System.out.println("Received message from " + client.getInetAddress().getHostName() + " at " + time);
+
+                    /*directory = new File("name");
 
                     if (directory.exists()) {
                         System.out.println("Directory already exists: " + directory.getName());
@@ -89,11 +91,12 @@ public class Server {
                             System.out.println("Failed to create directory: " + directory.getName());
                             System.exit(0);
                         }
-                    }
+                    }*/
 
-                    file = new File(directory.getPath() + File.separator + simpleDateFormat.format(date) + ".txt");
+                    file = new File(System.getProperty("user.dir") + File.separator + time + ".txt");
 
                     if (file.exists()) {
+
                         System.out.println("File already exists: " + file.getName());
                         System.exit(0);
                     }
@@ -104,6 +107,8 @@ public class Server {
                         writer.write(message);
                         writer.flush();
                         writer.close();
+
+                        client.close();
 
                     } catch (IOException e) {
                         e.printStackTrace();
