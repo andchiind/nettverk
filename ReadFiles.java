@@ -1,4 +1,8 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class ReadFiles {
 
@@ -31,9 +35,9 @@ public class ReadFiles {
 
         StringBuilder builder = new StringBuilder();
 
-        if (directory.isDirectory()) {
+        File[] files = directory.listFiles();
 
-            File[] files = directory.listFiles();
+        if (directory.isDirectory() && files != null) {
 
             for (File file : files) {
 
@@ -41,6 +45,7 @@ public class ReadFiles {
                 builder.append(readFile(file) + "\n");
 
             }
+
         } else {
             return null;
         }
