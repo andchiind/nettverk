@@ -1,24 +1,25 @@
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.Iterator;
 
 public class Client {
 
     private static Socket socket;
-    private static final int TIMEOUT = 10;
+    private static final int TIMEOUT = 100;
     private static final int BUFFER_SIZE = 140;
     private static OutputStream output;
-    private static InputStream input;
     private static HashMap<String, String> serverMap = new HashMap<>();
     private static String currentDirectory;
+    private static BufferedReader reader;
 
     private static Socket start(String host, String port) {
 
@@ -34,7 +35,8 @@ public class Client {
             socket.setSoTimeout(TIMEOUT);
 
         } catch (UnknownHostException e) {
-            e.printStackTrace();
+            System.out.println("Failed to connect to the given server.");
+            System.exit(0);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,11 +44,60 @@ public class Client {
         return socket;
     }
 
-    private static byte[] sendMessage() {
+    private static void chooseServer(String[] args) {
+
+        if (args.length == 2) {
+            socket = start(args[0], args[1]);
+        } else if (args.length == 0) {
+
+            updateServerMap();
+
+            System.out.println("Below is a list of some available servers:");
+
+            for (HashMap.Entry<String, String> address : serverMap.entrySet()) {
+                System.out.println(address.getKey());
+            }
+
+            System.out.println("\nIf you wish to connect to a server on the list, simply type in its code (eg. 'aci2').");
+            System.out.println("If you wish to connect to a server not on the list, please type 'other'.");
+
+            String serverString = userInput().trim();
+
+            if (serverString.equals("other")) {
+
+                System.out.println("Please type in the address of the server you wish to connect to below:");
+                String serverAddress = userInput().trim();
+
+                System.out.println("Please type in the port number of the server you wish to connect to below:");
+                String serverPort = userInput().trim();
+
+                socket = start(serverAddress, serverPort);
+
+            } else if (serverMap.containsKey(serverString)) {
+
+                socket = start(serverString + ".host.cs.st-andrews.ac.uk", serverMap.get(serverString));
+
+            } else {
+
+                System.out.println("The given input is not in the server list or a valid command.");
+                System.exit(0);
+            }
+
+        } else {
+
+            System.out.println("Usage: java Client <Server_Address> <Port_Number>");
+            System.out.println("Or enter no arguments and follow the instructions.");
+            System.exit(0);
+        }
+
+        System.out.println("Successfully connected to " + socket.getInetAddress().toString() + " on port " + socket.getPort());
+    }
+
+    private static void sendMessage() {
 
         byte[] buffer = new byte[BUFFER_SIZE];
 
-        byte[] message = new byte[BUFFER_SIZE];
+        byte[] message;
 
         int b = 0;
 
@@ -66,8 +117,6 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return message;
     }
 
     private static String userInput() {
@@ -96,12 +145,12 @@ public class Client {
 
     private static void updateServerMap() {
 
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         File serverListFile = new File(currentDirectory + "servers.txt");
+
         if (serverListFile.exists() && serverListFile.isFile()) {
             String file = ReadFiles.readFile(serverListFile);
 
-            String[] split = file.split("\n");
+            String[] split = file.split(",");
 
             for (String line : split) {
 
@@ -114,25 +163,25 @@ public class Client {
         }
     }
 
-    private static String receiveMessage(int size) {
+    private static void receiveMessage() {
 
-        int b = 0;
-
-        byte[] message = new byte[size];
+        String line;
 
         try {
+            do {
 
-            while (b < 1) {
+                line = reader.readLine();
 
-                b = input.read(message);
+                if (line != null && !line.equals("")) {
+                    System.out.println(line);
+                }
 
-            }
+            } while (reader.ready());
 
+        } catch (SocketTimeoutException ignored) { //This exception can be ignored
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return new String(message);
     }
 
     protected void finalize() {
@@ -151,78 +200,26 @@ public class Client {
 
     public static void main(String[] args) {
 
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         currentDirectory = System.getProperty("user.dir").replaceAll("src", "");
 
         try {
 
-            if (args.length == 2) {
-                socket = start(args[0], args[1]);
-            } else if (args.length == 0) {
-
-                updateServerMap();
-
-                System.out.println("Below is a list of some available servers:");
-
-                for (HashMap.Entry<String, String> address : serverMap.entrySet()) {
-                    System.out.println(address.getKey());
-                }
-
-                System.out.println("\nIf you wish to connect to a server on the list, simply type in its code (eg. 'aci2').");
-                System.out.println("If you wish to connect to a server not on the list, please type 'other'.");
-
-                String serverString = userInput().trim();
-
-                if (serverString.equals("other")) {
-                    System.out.println("Please type in the address of the server you wish to connect to below:");
-                    String serverAddress = userInput().trim();
-                    System.out.println("Please type in the port number of the server you wish to connect to below:");
-                    String serverPort = userInput().trim();
-                    socket = start(serverAddress, serverPort);
-                } else if (serverMap.containsKey(serverString)) {
-                    socket = start(serverString + ".host.cs.st-andrews.ac.uk", serverMap.get(serverString));
-                } else {
-                    System.out.println("The given input is not in the server list or a valid command.");
-                }
-
-            } else {
-                System.out.println("Usage: java Client <Server_Address> <Port_Number>");
-                System.out.println("Or enter no arguments and follow the instructions.");
-            }
-
-            System.out.println("Successfully connected to " + socket.getInetAddress().toString() + " on port " + socket.getPort());
+            chooseServer(args);
 
             output = socket.getOutputStream();
-            input = socket.getInputStream();
+            InputStream input = socket.getInputStream();
 
-            Thread.sleep(100);
+            reader = new BufferedReader(new InputStreamReader(input));
 
-            String reply = receiveMessage(BUFFER_SIZE);
-            System.out.println(reply);
-
-            byte[] message = sendMessage();
-            reply = receiveMessage(BUFFER_SIZE);
-            System.out.println(reply);
-
-            if (message[0] == 114) {
-
-                message = sendMessage();
-
-                Thread.sleep(1000);
-
-                byte[] length = receiveMessage(1).getBytes();
-
-                System.out.println(receiveMessage(length[0] * 127));
-
-            } else if (message[0] == 119) {
-
-                message = sendMessage();
+            while (true) { //This loop only ends when the user exits with control C
+                Thread.sleep(100);
+                receiveMessage();
+                sendMessage();
             }
 
         } catch (ConnectException e) {
             System.out.println("Failed to connect to the given server.");
-        }catch (SocketTimeoutException e) {
-            //This exception can be ignored
+        }catch (SocketTimeoutException ignored) { //This exception can be ignored
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {

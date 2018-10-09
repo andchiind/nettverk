@@ -10,6 +10,7 @@ public class ReadFiles {
     public static String readFile(File file) {
 
         String line  = null;
+        StringBuilder builder = new StringBuilder();
 
         try {
 
@@ -17,8 +18,13 @@ public class ReadFiles {
 
                 BufferedReader reader = new BufferedReader(new FileReader(file));
 
-                line = reader.readLine();
-
+                do {
+                    line = reader.readLine();
+                    if (line != null && !line.equals("")) {
+                        builder.append(line + ",");
+                    }
+                }
+                while (line != null && !line.equals(","));
             }
 
         } catch (FileNotFoundException e) {
@@ -26,7 +32,7 @@ public class ReadFiles {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return line;
+        return builder.toString();
     }
 
     public static String readDirectory(String name) {
@@ -41,8 +47,14 @@ public class ReadFiles {
 
             for (File file : files) {
 
-                builder.append("Message received at " + file.getName() + ":");
-                builder.append(readFile(file) + "\n");
+                builder.append("Message received at " + file.getName() + ": ");
+
+                String line = readFile(file);
+
+                //This accounts for the ',' at the end of each line
+                builder.append(line, 0, line.length() - 1);
+
+                builder.append(System.getProperty("line.separator"));
 
             }
 
